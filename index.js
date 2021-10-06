@@ -1,23 +1,36 @@
-const express = require('express');
-var http = require('http');
-const cors = require('cors');
+const express = require("express");
+var http = require("http");
+const cors = require("cors");
 const app = express();
-const port = process.env.PORT || 5000;  
+const port = process.env.PORT || 5000;
 var server = http.createServer(app);
 
-var io = require('socket.io')(server,{
-    cors:{
-        origin: '*'
-    }
-})
+var io = require("socket.io")(server, {
+  cors: {
+    origin: "*",
+  },
+});
 
 app.use(express.json());
 app.use(cors());
+var clients = {};
+io.on("connection", (socket) => {
+  console.log("connected");
+  console.log(socket.id, "has joined");
+  socket.on("signIn", (id) => {
+    console.log(id);
+    clients[id] = socket;
+    console.log(clients);
+  });
+  socket.on("message", (message) => {
+    console.log(message);
+    let targetId = message.targetId;
+    if (clients[targetId]) {
+      clients[targetId].emit("message", message);
+    }
+  });
+});
 
-io.on("Connection",(socket)=>{
-    console.log("connected");
-})
-
-server.listen(port,()=>{
-    console.log("server running");
+server.listen(port, "0.0.0.0", () => {
+  console.log(`server running  ${port}`);
 });
